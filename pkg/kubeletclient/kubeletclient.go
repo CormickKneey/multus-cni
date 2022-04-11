@@ -1,6 +1,7 @@
 package kubeletclient
 
 import (
+	"fmt"
 	"net/url"
 	"os"
 	"time"
@@ -112,4 +113,18 @@ func hasKubeletAPIEndpoint(endpoint string) bool {
 		return false
 	}
 	return true
+}
+
+func FormatPod(pod *v1.Pod) string {
+	if pod == nil {
+		return ""
+	}
+	return fmt.Sprintf("%v-%v-%v", pod.Namespace, pod.Name, pod.UID)
+}
+
+func FormatPodWithDetails(pod *v1.Pod) string {
+	if pod == nil {
+		return ""
+	}
+	return fmt.Sprintf("%v-%v-%v \nLabels:%+v\nAnnotations:%+v", pod.Namespace, pod.Name, pod.UID, pod.Labels, pod.Annotations)
 }

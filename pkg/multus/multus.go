@@ -29,7 +29,7 @@ import (
 	"github.com/containernetworking/cni/pkg/invoke"
 	"github.com/containernetworking/cni/pkg/skel"
 	cnitypes "github.com/containernetworking/cni/pkg/types"
-	cnicurrent "github.com/containernetworking/cni/pkg/types/current"
+	cnicurrent "github.com/containernetworking/cni/pkg/types/040"
 	"github.com/containernetworking/plugins/pkg/ns"
 	nettypes "github.com/k8snetworkplumbingwg/network-attachment-definition-client/pkg/apis/k8s.cni.cncf.io/v1"
 	nadutils "github.com/k8snetworkplumbingwg/network-attachment-definition-client/pkg/utils"
@@ -91,7 +91,7 @@ func consumeScratchNetConf(containerID, dataDir string) ([]byte, string, error) 
 }
 
 func getIfname(delegate *types.DelegateNetConf, argif string, idx int) string {
-	logging.Debugf("getIfname: %v, %s, %d", delegate, argif, idx)
+	logging.Debugf("getIfname: %v, %s, %d", delegate.Format(), argif, idx)
 	if delegate.IfnameRequest != "" {
 		return delegate.IfnameRequest
 	}
@@ -120,7 +120,7 @@ func getDelegateDeviceInfo(delegate *types.DelegateNetConf, runtimeConf *libcni.
 }
 
 func saveDelegates(containerID, dataDir string, delegates []*types.DelegateNetConf) error {
-	logging.Debugf("saveDelegates: %s, %s, %v", containerID, dataDir, delegates)
+	logging.Debugf("saveDelegates: %s, %s, %v", containerID, dataDir, types.FormatDelegates(delegates))
 	delegatesBytes, err := json.Marshal(delegates)
 	if err != nil {
 		return logging.Errorf("saveDelegates: error serializing delegate netconf: %v", err)
@@ -286,7 +286,7 @@ func conflistDel(rt *libcni.RuntimeConf, rawnetconflist []byte, multusNetconf *t
 }
 
 func delegateAdd(exec invoke.Exec, kubeClient *k8s.ClientInfo, pod *v1.Pod, delegate *types.DelegateNetConf, rt *libcni.RuntimeConf, multusNetconf *types.NetConf) (cnitypes.Result, error) {
-	logging.Debugf("delegateAdd: %v, %v, %v", exec, delegate, rt)
+	logging.Debugf("delegateAdd: %v, %v, %v", exec, delegate.Format(), rt)
 
 	if err := validateIfName(rt.NetNS, rt.IfName); err != nil {
 		return nil, logging.Errorf("delegateAdd: cannot set %q interface name to %q: %v", delegate.Conf.Type, rt.IfName, err)
@@ -446,7 +446,7 @@ func delegateDel(exec invoke.Exec, pod *v1.Pod, delegateConf *types.DelegateNetC
 // Uses netRt as base RuntimeConf (coming from NetConf) but merges it
 // with each of the delegates' configuration
 func delPlugins(exec invoke.Exec, pod *v1.Pod, args *skel.CmdArgs, k8sArgs *types.K8sArgs, delegates []*types.DelegateNetConf, lastIdx int, netRt *types.RuntimeConfig, multusNetconf *types.NetConf) error {
-	logging.Debugf("delPlugins: %v, %v, %v, %v, %v, %d, %v", exec, pod, args, k8sArgs, delegates, lastIdx, netRt)
+	logging.Debugf("delPlugins: %v, %v, %v, %v, %v, %d, %v", exec, pod, args, k8sArgs, types.FormatDelegates(delegates), lastIdx, netRt)
 
 	var errorstrings []string
 	for idx := lastIdx; idx >= 0; idx-- {
@@ -815,8 +815,7 @@ func CmdDel(args *skel.CmdArgs, exec invoke.Exec, kubeClient *k8s.ClientInfo) er
 
 	pod, err := getPod(kubeClient, k8sArgs, true)
 	if err != nil {
-		// getPod may be failed but just do print error in its log and continue to delete
-		logging.Errorf("Multus: getPod failed: %v, but continue to delete", err)
+		return err
 	}
 
 	// Read the cache to get delegates json for the pod

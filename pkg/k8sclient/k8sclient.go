@@ -246,7 +246,7 @@ func parsePodNetworkAnnotation(podNetworks, defaultNamespace string) ([]*types.N
 
 func getKubernetesDelegate(client *ClientInfo, net *types.NetworkSelectionElement, confdir string, pod *v1.Pod, resourceMap map[string]*types.ResourceInfo) (*types.DelegateNetConf, map[string]*types.ResourceInfo, error) {
 
-	logging.Debugf("getKubernetesDelegate: %v, %v, %s, %v, %v", client, net, confdir, pod, resourceMap)
+	logging.Debugf("getKubernetesDelegate: %v, %v, %s, %v, %v", client, net, confdir, kubeletclient.FormatPod(pod), resourceMap)
 	customResource, err := client.NetClient.NetworkAttachmentDefinitions(net.Namespace).Get(context.TODO(), net.Name, metav1.GetOptions{})
 	if err != nil {
 		errMsg := fmt.Sprintf("cannot find a network-attachment-definition (%s) in namespace (%s): %v", net.Name, net.Namespace, err)
@@ -316,7 +316,7 @@ func GetK8sArgs(args *skel.CmdArgs) (*types.K8sArgs, error) {
 func TryLoadPodDelegates(pod *v1.Pod, conf *types.NetConf, clientInfo *ClientInfo, resourceMap map[string]*types.ResourceInfo) (int, *ClientInfo, error) {
 	var err error
 
-	logging.Debugf("TryLoadPodDelegates: %v, %v, %v", pod, conf, clientInfo)
+	logging.Debugf("TryLoadPodDelegates: %v, %v, %v", kubeletclient.FormatPodWithDetails(pod), conf, clientInfo)
 	clientInfo, err = GetK8sClient(conf.Kubeconfig, clientInfo)
 	if err != nil {
 		return 0, nil, err
@@ -443,7 +443,7 @@ func GetK8sClient(kubeconfig string, kubeClient *ClientInfo) (*ClientInfo, error
 
 // GetPodNetwork gets net-attach-def annotation from pod
 func GetPodNetwork(pod *v1.Pod) ([]*types.NetworkSelectionElement, error) {
-	logging.Debugf("GetPodNetwork: %v", pod)
+	logging.Debugf("GetPodNetwork: %v", kubeletclient.FormatPod(pod))
 
 	netAnnot := pod.Annotations[networkAttachmentAnnot]
 	defaultNamespace := pod.ObjectMeta.Namespace
@@ -461,7 +461,7 @@ func GetPodNetwork(pod *v1.Pod) ([]*types.NetworkSelectionElement, error) {
 
 // GetNetworkDelegates returns delegatenetconf from net-attach-def annotation in pod
 func GetNetworkDelegates(k8sclient *ClientInfo, pod *v1.Pod, networks []*types.NetworkSelectionElement, conf *types.NetConf, resourceMap map[string]*types.ResourceInfo) ([]*types.DelegateNetConf, error) {
-	logging.Debugf("GetNetworkDelegates: %v, %v, %v, %v, %v", k8sclient, pod, networks, conf, resourceMap)
+	logging.Debugf("GetNetworkDelegates: %v, %v, %v, %v", kubeletclient.FormatPod(pod), networks, conf, resourceMap)
 
 	// Read all network objects referenced by 'networks'
 	var delegates []*types.DelegateNetConf
@@ -594,7 +594,7 @@ func GetDefaultNetworks(pod *v1.Pod, conf *types.NetConf, kubeClient *ClientInfo
 // tryLoadK8sPodDefaultNetwork get pod default network from annotations
 func tryLoadK8sPodDefaultNetwork(kubeClient *ClientInfo, pod *v1.Pod, conf *types.NetConf) (*types.DelegateNetConf, error) {
 	var netAnnot string
-	logging.Debugf("tryLoadK8sPodDefaultNetwork: %v, %v, %v", kubeClient, pod, conf)
+	logging.Debugf("tryLoadK8sPodDefaultNetwork:  %v, %v", kubeletclient.FormatPod(pod), conf)
 
 	netAnnot, ok := pod.Annotations[defaultNetAnnot]
 	if !ok {

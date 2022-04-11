@@ -24,7 +24,7 @@ import (
 
 	"github.com/containernetworking/cni/libcni"
 	"github.com/containernetworking/cni/pkg/skel"
-	"github.com/containernetworking/cni/pkg/types/current"
+	current "github.com/containernetworking/cni/pkg/types/040"
 	"github.com/containernetworking/cni/pkg/version"
 	nadutils "github.com/k8snetworkplumbingwg/network-attachment-definition-client/pkg/utils"
 	"gopkg.in/k8snetworkplumbingwg/multus-cni.v3/pkg/logging"
@@ -147,7 +147,7 @@ func LoadDelegateNetConf(bytes []byte, net *NetworkSelectionElement, deviceID st
 
 // mergeCNIRuntimeConfig creates CNI runtimeconfig from delegate
 func mergeCNIRuntimeConfig(runtimeConfig *RuntimeConfig, delegate *DelegateNetConf) *RuntimeConfig {
-	logging.Debugf("mergeCNIRuntimeConfig: %v %v", runtimeConfig, delegate)
+	logging.Debugf("mergeCNIRuntimeConfig: %v %v", runtimeConfig, delegate.Format())
 	var mergedRuntimeConfig RuntimeConfig
 
 	if runtimeConfig == nil {
@@ -185,7 +185,7 @@ func mergeCNIRuntimeConfig(runtimeConfig *RuntimeConfig, delegate *DelegateNetCo
 // CreateCNIRuntimeConf create CNI RuntimeConf for a delegate. If delegate configuration
 // exists, merge data with the runtime config.
 func CreateCNIRuntimeConf(args *skel.CmdArgs, k8sArgs *K8sArgs, ifName string, rc *RuntimeConfig, delegate *DelegateNetConf) (*libcni.RuntimeConf, string) {
-	logging.Debugf("CreateCNIRuntimeConf: %v, %v, %s, %v %v", args, k8sArgs, ifName, rc, delegate)
+	logging.Debugf("CreateCNIRuntimeConf: %v, %v, %s, %v, %v", args, k8sArgs, ifName, rc, delegate.Format())
 	var cniDeviceInfoFile string
 	var delegateRc *RuntimeConfig
 
@@ -396,7 +396,7 @@ func LoadNetConf(bytes []byte) (*NetConf, error) {
 
 // AddDelegates appends the new delegates to the delegates list
 func (n *NetConf) AddDelegates(newDelegates []*DelegateNetConf) error {
-	logging.Debugf("AddDelegates: %v", newDelegates)
+	logging.Debugf("AddDelegates: %v", FormatDelegates(newDelegates))
 	n.Delegates = append(n.Delegates, newDelegates...)
 	return nil
 }

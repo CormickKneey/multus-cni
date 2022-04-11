@@ -19,7 +19,7 @@ import (
 	"net"
 
 	"github.com/containernetworking/cni/pkg/types"
-	"github.com/containernetworking/cni/pkg/types/current"
+	current "github.com/containernetworking/cni/pkg/types/040"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -112,6 +112,19 @@ type DelegateNetConf struct {
 	// Raw JSON
 	Bytes []byte
 }
+
+func (d *DelegateNetConf) Format() string {
+	return string(d.Bytes)
+}
+
+func FormatDelegates(ds []*DelegateNetConf) string {
+	res := ""
+	for idx := range ds {
+		res += ds[idx].Format() + "\n"
+	}
+	return res
+}
+
 
 // NetworkSelectionElement represents one element of the JSON format
 // Network Attachment Selection Annotation as described in section 4.1.2
